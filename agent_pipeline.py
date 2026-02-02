@@ -51,6 +51,12 @@ def run_supply_plan_agent(user_input: str) -> str:
     mapped = map_supply_plan(fusion_response)
 
     return format_plan_for_user(mapped)
+import asyncio
+
+async def run_supply_plan_agent_async(user_input: str) -> dict:
+    # wrap blocking code in thread executor if needed
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, run_supply_plan_agent, user_input)
 
 
 @app.get("/")
@@ -59,9 +65,11 @@ def root():
 
 
 @app.post("/supply-plan")
-def supply_plan_agent(request: SupplyPlanRequest,username: str = Depends(authenticate_user)):
+async def supply_plan_agent(request: SupplyPlanRequest, username: str = Depends(authenticate_user)):
     user_input = request.query
-    return {"response": run_supply_plan_agent(user_input)}
+    response = await run_supply_plan_agent_async(user_input)
+    return {"response": response}
+
 
 if __name__ == "__main__":
     import uvicorn
