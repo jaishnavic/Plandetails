@@ -33,7 +33,6 @@ class SupplyPlanRequest(BaseModel):
 
 def run_supply_plan_agent(user_input: str) -> str:
     llm_output = call_llm(
-        SYSTEM_PROMPT,
         build_user_prompt(user_input)
     )
 

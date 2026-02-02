@@ -18,29 +18,19 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 
 import json
 import re
-import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 
+from llm.prompt import SYSTEM_PROMPT
+
 load_dotenv()
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-
-def call_llm(system_prompt: str, user_prompt: str) -> dict:
-    model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        system_instruction=system_prompt
-    )
-
-    response = model.generate_content(
-        user_prompt,
-        generation_config={
-            "temperature": 0,
-            "response_mime_type": "application/json"
-        }
-    )
-
+def call_llm(user_prompt: str) -> dict:
+    response = client.models.generate_content(
+            model="models/gemini-2.5-flash",
+            contents=f"{SYSTEM_PROMPT}\n\nUser input:\n{user_prompt}"
+        )
+    
     raw_text = response.text.strip()
 
     # 🔐 HARDENING: extract JSON if Gemini adds noise
