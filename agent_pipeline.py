@@ -1,5 +1,9 @@
+import os
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import FastAPI, HTTPException, Depends
+
 
 from llm.prompt import SYSTEM_PROMPT, build_user_prompt
 from llm.llm_client import call_llm
@@ -11,6 +15,18 @@ from config import SUPPLY_PLAN_ID
 
 
 app = FastAPI()
+
+# ---------------- AUTH ----------------
+security = HTTPBasic()
+
+def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
+    if (
+        credentials.username == os.getenv("GETPLAN_USERNAME")
+        and credentials.password == os.getenv("GETPLAN_PASSWORD")
+    ):
+        return credentials.username
+    raise HTTPException(status_code=401, detail="Unauthorized")
+
 
 class SupplyPlanRequest(BaseModel):
     query: str
@@ -44,7 +60,7 @@ def root():
 
 
 @app.post("/supply-plan")
-def supply_plan_agent(request: SupplyPlanRequest):
+def supply_plan_agent(request: SupplyPlanRequest,username: str = Depends(authenticate_user)):
     user_input = request.query
     return {"response": run_supply_plan_agent(user_input)}
 
